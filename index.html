@@ -91,11 +91,32 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
-// 匿名認証を開始（データベースへの読み書きは安全ルール設定後に実装）
+// 匿名認証を開始
 const authReady = signInAnonymously(auth).catch((error) => {
   console.error("Firebase匿名認証エラー:", error);
   alert("参加者認証に失敗しました。ページを再読み込みしてください。");
 });
+
+// Firebaseに保存された合計ポイントを読み込む。
+// ポイントの加算処理は、不正防止のためサーバー側のクイズ判定と一緒に実装する。
+async function loadPoints(){
+  try{
+    await authReady;
+    const user=auth.currentUser;
+    if(!user) return;
+    const participantRef=doc(db,'participants',user.uid);
+    const snapshot=await getDoc(participantRef);
+    const totalPoints=snapshot.exists() && Number.isFinite(snapshot.data().totalPoints)
+      ? snapshot.data().totalPoints : 0;
+    document.getElementById('points').textContent=totalPoints+' pt';
+    document.getElementById('mypoints').textContent=totalPoints+' pt';
+  }catch(error){
+    console.error('ポイント読み込みエラー:',error);
+    document.getElementById('points').textContent='読込失敗';
+    document.getElementById('mypoints').textContent='読込失敗';
+  }
+}
+loadPoints();
 
 const names=['酪農学園ホール','野外礼拝堂','中央館','D1号館','A3号館','B4号館','A2号館','黒澤酉蔵像'];
 function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
