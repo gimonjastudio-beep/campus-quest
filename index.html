@@ -46,14 +46,7 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 <div class="map">
 <div class="path"></div>
 <div class="maplabel" style="top:8%;left:8%"> CAMPUS QUEST AREA </div>
-<button class="pin" style="top:17%;left:12%" onclick="spotInfo(0)">🏛️ 酪農学園ホール<span>SPOT 01</span></button>
-<button class="pin" style="top:35%;left:52%" onclick="spotInfo(1)">⛪ 野外礼拝堂<span>SPOT 02</span></button>
-<button class="pin" style="top:52%;left:18%" onclick="spotInfo(2)">🏢 中央館<span>SPOT 03</span></button>
-<button class="pin" style="top:68%;left:58%" onclick="spotInfo(3)">🏫 D1号館<span>SPOT 04</span></button>
-<button class="pin" style="top:28%;left:73%" onclick="spotInfo(4)">🏫 A3号館<span>SPOT 05</span></button>
-<button class="pin" style="top:79%;left:12%" onclick="spotInfo(5)">🏫 B4号館<span>SPOT 06</span></button>
-<button class="pin" style="top:48%;left:72%" onclick="spotInfo(6)">🏫 A2号館<span>SPOT 07</span></button>
-<button class="pin" style="top:87%;left:43%" onclick="spotInfo(7)">🗿 黒澤酉蔵像<span>SPOT 08</span></button>
+<div id="mapPins"></div>
 </div>
 <h2 class="section-title">📍 探索スポット</h2><div class="spot-list" id="spotList"></div>
 </section>
@@ -118,9 +111,30 @@ async function loadPoints(){
 }
 loadPoints();
 
-const names=['酪農学園ホール','野外礼拝堂','中央館','D1号館','A3号館','B4号館','A2号館','黒澤酉蔵像'];
+// スポット情報はここだけを編集すれば、地図と一覧の両方に反映されます。
+// 場所を追加するときは1件追加、削除するときは1件削除してください。
+// top / left はマップ内の表示位置（%）です。
+const spots=[
+  {id:'spot01',name:'酪農学園ホール',emoji:'🏛️',top:17,left:12},
+  {id:'spot02',name:'野外礼拝堂',emoji:'⛪',top:35,left:52},
+  {id:'spot03',name:'中央館',emoji:'🏢',top:52,left:18},
+  {id:'spot04',name:'D1号館',emoji:'🏫',top:68,left:58},
+  {id:'spot05',name:'A3号館',emoji:'🏫',top:28,left:73},
+  {id:'spot06',name:'B4号館',emoji:'🏫',top:79,left:12},
+  {id:'spot07',name:'A2号館',emoji:'🏫',top:48,left:72},
+  {id:'spot08',name:'黒澤酉蔵像',emoji:'🗿',top:87,left:43}
+];
 function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
-function spotInfo(i){alert(names[i]+'\n\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\n\n※ QR認証・クイズ機能はこれから実装します。');}
+function spotInfo(i){const spot=spots[i];if(!spot)return;alert(spot.name+'\\n\\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\\n\\n※ QR認証・クイズ機能はこれから実装します。');}
+function renderSpots(){
+  document.getElementById('mapPins').innerHTML=spots.map((spot,i)=>
+    '<button class="pin" style="top:'+spot.top+'%;left:'+spot.left+'%" onclick="spotInfo('+i+')">'+spot.emoji+' '+spot.name+'<span>SPOT '+String(i+1).padStart(2,'0')+'</span></button>'
+  ).join('');
+  document.getElementById('spotList').innerHTML=spots.map((spot,i)=>
+    '<div class="spot"><div class="emoji">'+spot.emoji+'</div><div class="info"><b>'+spot.name+'</b><small>SPOT '+String(i+1).padStart(2,'0')+' ・ クイズ1問（準備中）</small></div><span class="status">未挑戦</span></div>'
+  ).join('');
+  document.getElementById('cleared').textContent='0 / '+spots.length;
+}
 async function saveName(){
   const n=document.getElementById('nickname').value.trim();
   const status=document.getElementById('nameStatus');
@@ -153,7 +167,7 @@ async function saveName(){
   }
 }
 document.getElementById('nickname').value=localStorage.getItem('cq_nickname')||'';
-document.getElementById('spotList').innerHTML=names.map((n,i)=>'<div class="spot"><div class="emoji">📍</div><div class="info"><b>'+n+'</b><small>SPOT '+String(i+1).padStart(2,'0')+' ・ クイズ1問（準備中）</small></div><span class="status">未挑戦</span></div>').join('');
+renderSpots();
 
 // HTML内のボタンから呼び出す関数を公開
 Object.assign(window, { show, spotInfo, saveName });
