@@ -70,7 +70,7 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, collection, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyChyzVkyyhFXFPPqG1GoYtqB5c29d51KRA",
@@ -90,26 +90,47 @@ const authReady = signInAnonymously(auth).catch((error) => {
   alert("参加者認証に失敗しました。ページを再読み込みしてください。");
 });
 
-// Firebaseに保存された合計ポイントを読み込む。
-// ポイントの加算処理は、不正防止のためサーバー側のクイズ判定と一緒に実装する。
-async function loadPoints(){
+// Firebaseに保存されたスポットごとの挑戦状況を読み込む。
+// spotProgress の書き込みはサーバー側だけに許可する設計です。
+async function loadSpotProgress(){
   try{
     await authReady;
     const user=auth.currentUser;
     if(!user) return;
-    const participantRef=doc(db,'participants',user.uid);
-    const snapshot=await getDoc(participantRef);
-    const totalPoints=snapshot.exists() && Number.isFinite(snapshot.data().totalPoints)
-      ? snapshot.data().totalPoints : 0;
+
+    const progressRef=collection(db,'participants',user.uid,'spotProgress');
+    const snapshot=await getDocs(progressRef);
+
+    // 読み込んだ記録を、登録済みスポットに反映
+    snapshot.forEach((progressDoc)=>{
+      const spot=spots.find(item=>item.id===progressDoc.id);
+      if(!spot) return;
+
+      const data=progressDoc.data();
+      if(['notStarted','attempted','cleared'].includes(data.status)){
+        spot.status=data.status;
+      }
+      spot.points=Number.isFinite(data.points) && data.points>0 ? data.points : 0;
+    });
+
+    const totalPoints=spots.reduce((sum,spot)=>sum+(spot.points||0),0);
     document.getElementById('points').textContent=totalPoints+' pt';
     document.getElementById('mypoints').textContent=totalPoints+' pt';
+
+    const history=spots
+      .filter(spot=>(spot.points||0)>0)
+      .map(spot=>spot.name+'：'+spot.points+' pt');
+    document.getElementById('history').textContent=
+      history.length ? history.join(' ／ ') : 'まだ獲得履歴はありません。';
+
+    renderSpots();
   }catch(error){
-    console.error('ポイント読み込みエラー:',error);
+    console.error('挑戦状況読み込みエラー:',error);
     document.getElementById('points').textContent='読込失敗';
     document.getElementById('mypoints').textContent='読込失敗';
+    document.getElementById('history').textContent='挑戦状況を読み込めませんでした。';
   }
 }
-loadPoints();
 
 // スポット情報はここだけを編集すれば、地図と一覧の両方に反映されます。
 // 場所を追加するときは1件追加、削除するときは1件削除してください。
@@ -173,6 +194,7 @@ async function saveName(){
 }
 document.getElementById('nickname').value=localStorage.getItem('cq_nickname')||'';
 renderSpots();
+loadSpotProgress();
 
 // HTML内のボタンから呼び出す関数を公開
 Object.assign(window, { show, spotInfo, saveName });
