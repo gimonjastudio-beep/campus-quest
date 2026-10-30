@@ -33,7 +33,9 @@ input{width:100%;padding:12px;border:1px solid #d8e1d4;border-radius:10px;font:i
 .note{font-size:12px;line-height:1.7;color:var(--muted)}
 footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 @media(min-width:600px){nav{bottom:14px;border:1px solid var(--line);border-radius:16px}}
+.scanner-box{width:100%;max-width:360px;margin:14px auto;border-radius:14px;overflow:hidden;background:#17251c;min-height:40px}.scan-result{background:#f4f7ee;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 </style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
 <div class="app">
@@ -58,7 +60,15 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 </section>
 <section id="scan" class="panel">
 <h2 class="section-title">📷 QRコード読み取り</h2>
-<div class="pagecard"><b>現地のQRコードを読み取ろう</b><p class="note">この画面は操作イメージです。カメラ起動・QRコード認証は、サーバー機能を追加する段階で実装します。</p><button class="primary" onclick="alert('QR読み取り機能は次の開発段階で追加します。')">QRコードを読み取る</button></div>
+<div class="pagecard">
+  <b>現地のQRコードを読み取ろう</b>
+  <p class="note">スマートフォンではカメラの使用を許可してください。カメラを使うにはHTTPS接続が必要です。</p>
+  <div id="qr-reader" class="scanner-box"></div>
+  <button class="primary" id="startScanButton" onclick="startScan()">カメラを起動する</button>
+  <button class="secondary" id="stopScanButton" onclick="stopScan()" style="display:none">読み取りを停止</button>
+  <div id="scanResult" class="scan-result" aria-live="polite">まだQRコードを読み取っていません。</div>
+  <p class="note">※ 現在はQRコードの読み取り確認までです。読み取っただけで参加登録・クイズ開始・ポイント付与は行いません。</p>
+</div>
 </section>
 <section id="profile" class="panel">
 <h2 class="section-title">👤 参加情報</h2><div class="pagecard"><label for="nickname">ニックネーム</label><input id="nickname" maxlength="16" placeholder="ニックネームを入力"><button class="primary" onclick="saveName()">保存する</button><p class="note" id="nameStatus">試作版ではこの端末内にのみ保存されます。</p></div>
@@ -132,6 +142,67 @@ async function loadSpotProgress(){
   }
 }
 
+// QRコード読み取り（現段階は内容の検出まで。参加認証はサーバー側で後から実装）
+let qrScanner=null;
+async function startScan(){
+  const resultBox=document.getElementById('scanResult');
+  const startButton=document.getElementById('startScanButton');
+  const stopButton=document.getElementById('stopScanButton');
+  if(!window.Html5Qrcode){
+    resultBox.textContent='QR読み取りライブラリを読み込めませんでした。ページを再読み込みしてください。';
+    return;
+  }
+  if(qrScanner){
+    resultBox.textContent='すでにカメラを起動しています。';
+    return;
+  }
+  try{
+    qrScanner=new Html5Qrcode('qr-reader');
+    await qrScanner.start(
+      {facingMode:'environment'},
+      {fps:10,qrbox:{width:240,height:240}},
+      (decodedText)=>{
+        const match=decodedText.match(/^CAMPUSQUEST:SPOT:(spot\d{2})$/);
+        const entry=decodedText==='CAMPUSQUEST:ENTRY';
+        if(match){
+          const spot=spots.find(item=>item.id===match[1]);
+          resultBox.textContent=spot
+            ? '読み取り成功：'+spot.name+'（'+spot.id+'）\n※ QR内容を確認した段階です。クイズ開始にはサーバー認証が必要です。'
+            : '未登録のスポットQRコードです。';
+        }else if(entry){
+          resultBox.textContent='参加用QRコードを読み取りました。参加登録の認証機能はこれから追加します。';
+        }else{
+          resultBox.textContent='このアプリ用のQRコードではありません。';
+        }
+        stopScan();
+      },
+      ()=>{}
+    );
+    startButton.style.display='none';
+    stopButton.style.display='inline-block';
+    resultBox.textContent='カメラを起動しました。QRコードを枠内に映してください。';
+  }catch(error){
+    console.error('QRカメラ起動エラー:',error);
+    qrScanner=null;
+    resultBox.textContent='カメラを起動できませんでした。ブラウザのカメラ許可とHTTPS接続を確認してください。';
+  }
+}
+async function stopScan(){
+  const startButton=document.getElementById('startScanButton');
+  const stopButton=document.getElementById('stopScanButton');
+  if(qrScanner){
+    try{
+      if(qrScanner.isScanning) await qrScanner.stop();
+      qrScanner.clear();
+    }catch(error){
+      console.warn('QR読み取り停止時の通知:',error);
+    }
+    qrScanner=null;
+  }
+  if(startButton) startButton.style.display='inline-block';
+  if(stopButton) stopButton.style.display='none';
+}
+
 // スポット情報はここだけを編集すれば、地図と一覧の両方に反映されます。
 // 場所を追加するときは1件追加、削除するときは1件削除してください。
 // top / left はマップ内の表示位置（%）です。
@@ -197,6 +268,6 @@ renderSpots();
 loadSpotProgress();
 
 // HTML内のボタンから呼び出す関数を公開
-Object.assign(window, { show, spotInfo, saveName });
+Object.assign(window, { show, spotInfo, saveName, startScan, stopScan });
 </script>
 </body></html>
