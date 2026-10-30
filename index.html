@@ -74,12 +74,36 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 <footer>※ 開発中の画面イメージです。実際の建物配置・QR認証・ポイント保存は未実装です。</footer>
 <nav><button class="active" onclick="show('explore',this)">🗺️ 探索</button><button onclick="show('scan',this)">📷 QR</button><button onclick="show('mypage',this)">⭐ ポイント</button><button onclick="show('profile',this)">👤 設定</button></nav>
 </div>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChyzVkyyhFXFPPqG1GoYtqB5c29d51KRA",
+  authDomain: "campus-quest-9b44f.firebaseapp.com",
+  projectId: "campus-quest-9b44f",
+  storageBucket: "campus-quest-9b44f.firebasestorage.app",
+  messagingSenderId: "708289978505",
+  appId: "1:708289978505:web:4009536874c5043be7e658"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+
+// 匿名認証を開始（データベースへの読み書きは安全ルール設定後に実装）
+signInAnonymously(auth).catch((error) => {
+  console.error("Firebase匿名認証エラー:", error);
+});
+
 const names=['酪農学園ホール','野外礼拝堂','中央館','D1号館','A3号館','B4号館','A2号館','黒澤酉蔵像'];
 function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
 function spotInfo(i){alert(names[i]+'\n\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\n\n※ QR認証・クイズ機能はこれから実装します。');}
 function saveName(){const n=document.getElementById('nickname').value.trim();if(!n){alert('ニックネームを入力してください');return;}localStorage.setItem('cq_nickname',n);document.getElementById('nameStatus').textContent='保存しました：'+n+'（この端末内のみ）';}
 document.getElementById('nickname').value=localStorage.getItem('cq_nickname')||'';
 document.getElementById('spotList').innerHTML=names.map((n,i)=>'<div class="spot"><div class="emoji">📍</div><div class="info"><b>'+n+'</b><small>SPOT '+String(i+1).padStart(2,'0')+' ・ クイズ1問（準備中）</small></div><span class="status">未挑戦</span></div>').join('');
+
+// HTML内のボタンから呼び出す関数を公開
+Object.assign(window, { show, spotInfo, saveName });
 </script>
 </body></html>
