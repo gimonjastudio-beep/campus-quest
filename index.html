@@ -70,6 +70,19 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
   <p class="note">※ 現在はQRコードの読み取り確認までです。読み取っただけで参加登録・クイズ開始・ポイント付与は行いません。</p>
 </div>
 </section>
+<section id="quiz" class="panel">
+<h2 class="section-title">🧩 スポットクイズ</h2>
+<div class="pagecard">
+  <div class="note" id="quizSpotLabel">読み取ったスポット</div>
+  <h2 id="quizSpotName" style="margin:8px 0 14px">スポット名</h2>
+  <div style="background:#f4f7ee;border-radius:14px;padding:16px">
+    <b>クイズ準備中！</b>
+    <p class="note" id="quizPlaceholder">この場所の問題は、イベント内容が決まってから設定します。</p>
+  </div>
+  <p class="note">今は画面表示の確認段階です。回答・ポイント付与・挑戦済み状態の保存はまだ行いません。</p>
+  <button class="primary" onclick="show('explore',document.querySelector('nav button'))">地図に戻る</button>
+</div>
+</section>
 <section id="profile" class="panel">
 <h2 class="section-title">👤 参加情報</h2><div class="pagecard"><label for="nickname">ニックネーム</label><input id="nickname" maxlength="16" placeholder="ニックネームを入力"><button class="primary" onclick="saveName()">保存する</button><p class="note" id="nameStatus">試作版ではこの端末内にのみ保存されます。</p></div>
 </section>
@@ -166,9 +179,12 @@ async function startScan(){
         const entry=decodedText==='CAMPUSQUEST:ENTRY';
         if(match){
           const spot=spots.find(item=>item.id===match[1]);
-          resultBox.textContent=spot
-            ? '読み取り成功：'+spot.name+'（'+spot.id+'）\n※ QR内容を確認した段階です。クイズ開始にはサーバー認証が必要です。'
-            : '未登録のスポットQRコードです。';
+          if(spot){
+            resultBox.textContent='読み取り成功：'+spot.name+'（'+spot.id+'）';
+            openQuiz(spot);
+          }else{
+            resultBox.textContent='未登録のスポットQRコードです。';
+          }
         }else if(entry){
           resultBox.textContent='参加用QRコードを読み取りました。参加登録の認証機能はこれから追加します。';
         }else{
@@ -216,7 +232,15 @@ const spots=[
   {id:'spot07',name:'A2号館',emoji:'🏫',top:48,left:72,status:'notStarted'},
   {id:'spot08',name:'黒澤酉蔵像',emoji:'🗿',top:87,left:43,status:'notStarted'}
 ];
-function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
+function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');}
+function openQuiz(spot){
+  document.getElementById('quizSpotLabel').textContent='SPOT '+spot.id.replace('spot','');
+  document.getElementById('quizSpotName').textContent=spot.emoji+' '+spot.name;
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  document.getElementById('quiz').classList.add('active');
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelector('nav button:nth-child(2)').classList.add('active');
+}
 function spotInfo(i){const spot=spots[i];if(!spot)return;alert(spot.name+'\\n\\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\\n\\n※ QR認証・クイズ機能はこれから実装します。');}
 // 状態: notStarted（未挑戦） / attempted（回答済み・不正解） / cleared（正解）
 function getStatusLabel(status){
