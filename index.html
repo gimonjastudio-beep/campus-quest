@@ -33,6 +33,7 @@ nav button{flex:1;border:0;background:none;color:#71806e;font-size:11px;padding:
 input{width:100%;padding:12px;border:1px solid #d8e1d4;border-radius:10px;font:inherit;margin:8px 0 12px}
 .note{font-size:12px;line-height:1.7;color:var(--muted)}
 footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
+.welcome-gate{display:none;position:fixed;inset:0;z-index:20;background:#26352bd9;padding:22px;align-items:center;justify-content:center}.welcome-gate-card{width:min(440px,100%);background:#fffdf5;border-radius:22px;padding:24px;box-shadow:0 12px 40px #0003}.welcome-gate-card h2{font-size:23px;margin:8px 0}.welcome-gate-card p{font-size:14px;line-height:1.7;color:var(--muted)}.welcome-gate-card label{display:block;font-size:13px;font-weight:700;margin-top:18px}
 @media(min-width:600px){nav{bottom:14px;border:1px solid var(--line);border-radius:16px}}
 .scanner-box{width:100%;max-width:360px;margin:14px auto;border-radius:14px;overflow:hidden;background:#17251c;min-height:40px}.scan-result{background:#f4f7ee;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 </style>
@@ -40,6 +41,7 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 </head>
 <body>
 <div class="app">
+<div id="welcomeGate" class="welcome-gate"><div class="welcome-gate-card"><div class="brand">RAKUNO GAKUEN UNIVERSITY</div><h2>🐄 CAMPUS QUESTへようこそ！</h2><p>キャンパスを自由に探検して、6つのスポットにあるQRコードを読み取り、クイズに挑戦しよう！<br>まずは参加用のニックネームを登録しよう。</p><label for="welcomeNickname">ニックネーム（16文字以内）</label><input id="welcomeNickname" maxlength="16" placeholder="例：ツナマヨ"><button class="primary" style="width:100%" onclick="registerFromWelcome()">登録して冒険を始める</button><p class="note" style="margin-bottom:0">登録にはインターネット接続が必要です。</p></div></div>
 <header><div class="brand">RAKUNO GAKUEN UNIVERSITY</div><h1>🐄 CAMPUS QUEST</h1><p>キャンパスを探検して、クイズに挑戦しよう！</p></header>
 <main>
 <section id="explore" class="panel active">
@@ -317,6 +319,12 @@ function renderSpots(){
   ).join('');
   document.getElementById('cleared').textContent=clearedCount+' / '+spots.length;
 }
+async function registerFromWelcome(){
+  const value=document.getElementById('welcomeNickname').value.trim();
+  if(!value){alert('ニックネームを入力してください');return;}
+  document.getElementById('nickname').value=value;
+  await saveName();
+}
 async function saveName(){
   const n=document.getElementById('nickname').value.trim();
   const status=document.getElementById('nameStatus');
@@ -327,13 +335,14 @@ async function saveName(){
     await authReady;const user=auth.currentUser;if(!user) throw new Error('匿名認証が完了していません');
     const participantRef=doc(db,'participants',user.uid);const existing=await getDoc(participantRef);
     await setDoc(participantRef,{nickname:n,...(existing.exists()?{}:{createdAt:serverTimestamp()}),updatedAt:serverTimestamp()},{merge:true});
-    localStorage.setItem('cq_nickname',n);status.textContent='保存しました：'+n+'（参加者ID：'+user.uid.slice(0,8)+'...）';alert('ニックネームを登録しました！');
+    localStorage.setItem('cq_nickname',n);status.textContent='保存しました：'+n+'（参加者ID：'+user.uid.slice(0,8)+'...）';const gate=document.getElementById('welcomeGate');if(gate)gate.style.display='none';alert('ニックネームを登録しました！');
   }catch(error){
     console.error('参加者登録エラー:',error);status.textContent='保存できませんでした。時間をおいて再度お試しください。';alert('登録に失敗しました。Firestoreのセキュリティルール設定が必要な場合があります。');
   }finally{button.disabled=false;button.textContent='保存する';}
 }
 document.getElementById('nickname').value=localStorage.getItem('cq_nickname')||'';
+if(!localStorage.getItem('cq_nickname'))document.getElementById('welcomeGate').style.display='flex';
 spots.forEach(spot=>{const saved=localProgress[spot.id];if(saved){spot.status=saved.correct?'cleared':'attempted';spot.points=saved.points||0;}});renderSpots();updateLocalScore();loadSpotProgress();
-Object.assign(window,{show,spotInfo,saveName,startScan,stopScan});
+Object.assign(window,{show,spotInfo,saveName,startScan,stopScan,registerFromWelcome});
 </script>
 </body></html>
