@@ -76,11 +76,23 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 <div class="pagecard">
   <div class="note" id="quizSpotLabel">読み取ったスポット</div>
   <h2 id="quizSpotName" style="margin:8px 0 14px">スポット名</h2>
-  <div style="background:#f4f7ee;border-radius:14px;padding:16px">
-    <b>クイズ準備中！</b>
-    <p class="note" id="quizPlaceholder">この場所の問題は、イベント内容が決まってから設定します。</p>
+  <div style="background:#f4f7ee;border-radius:14px;padding:16px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:8px">QUESTION</div>
+    <b id="quizQuestion">このスポットのクイズを準備中です！</b>
+    <p class="note" id="quizPlaceholder">問題文は後から設定します。今は4択画面のデザインを確認できます。</p>
   </div>
-  <p class="note">今は画面表示の確認段階です。回答・ポイント付与・挑戦済み状態の保存はまだ行いません。</p>
+  <div style="font-size:13px;font-weight:800;margin:0 0 9px">答えを1つ選んでね</div>
+  <div id="quizChoices" style="display:grid;gap:9px">
+    <button class="secondary" disabled style="text-align:left;opacity:.65">① 選択肢 1（準備中）</button>
+    <button class="secondary" disabled style="text-align:left;opacity:.65">② 選択肢 2（準備中）</button>
+    <button class="secondary" disabled style="text-align:left;opacity:.65">③ 選択肢 3（準備中）</button>
+    <button class="secondary" disabled style="text-align:left;opacity:.65">④ 選択肢 4（準備中）</button>
+  </div>
+  <div style="background:#fff8e8;border:1px solid #f0e3c4;border-radius:12px;padding:12px;margin-top:14px">
+    <b style="font-size:12px">⭐ 獲得ポイント</b>
+    <p class="note" style="margin:5px 0 0">難易度に応じて、初級10 pt・中級20 pt・上級30 ptを予定しています。</p>
+  </div>
+  <p class="note" style="margin-top:12px">※ まだ問題・選択肢は未設定です。回答やポイントの保存は行いません。</p>
   <button class="primary" onclick="show('explore',document.querySelector('nav button'))">地図に戻る</button>
 </div>
 </section>
