@@ -180,12 +180,12 @@ async function stopScan(){
 }
 const spots=[
   {id:'spot01',name:'酪農学園ホール',emoji:'🏛️',top:76,left:60,status:'notStarted'},
-  {id:'spot02',name:'中央館',emoji:'🏢',top:43,left:49,status:'notStarted'},
+  {id:'spot02',name:'中央館',emoji:'🏢',top:47,left:49,status:'notStarted'},
   {id:'spot03',name:'黒澤酉蔵像',emoji:'🗿',top:36,left:28,status:'notStarted'},
   {id:'spot04',name:'A3号館',emoji:'🏫',top:39,left:35,status:'notStarted'},
   {id:'spot05',name:'B4号館',emoji:'🏫',top:12,left:55,status:'notStarted'},
-  {id:'spot06',name:'C1号館',emoji:'🏫',top:39,left:63,status:'notStarted'},
-  {id:'spot07',name:'D1号館',emoji:'🏫',top:43,left:84,status:'notStarted'}
+  {id:'spot06',name:'C1号館',emoji:'🏫',top:44,left:63,status:'notStarted'},
+  {id:'spot07',name:'D1号館',emoji:'🏫',top:48,left:84,status:'notStarted'}
 ];
 function show(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');}
 function openQuiz(spot){
