@@ -80,8 +80,8 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
   <h2 id="quizSpotName" style="margin:8px 0 14px">スポット名</h2>
   <div style="background:#f4f7ee;border-radius:14px;padding:16px;margin-bottom:14px">
     <div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:8px">QUESTION</div>
-    <b id="quizQuestion">このスポットのクイズを準備中です！</b>
-    <p class="note" id="quizPlaceholder">問題文は後から設定します。今は4択画面のデザインを確認できます。</p>
+    <b id="quizQuestion">QRコードを読み取ってクイズに挑戦しよう！</b>
+    <p class="note" id="quizPlaceholder">現地のQRコードを読み取ると、クイズが表示されます。</p>
   </div>
   <div style="font-size:13px;font-weight:800;margin:0 0 9px">答えを1つ選んでね</div>
   <div id="quizChoices" style="display:grid;gap:9px"></div>
@@ -89,7 +89,7 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
   <div style="background:#eef6e9;border:1px solid #dcebd4;border-radius:12px;padding:12px;margin-top:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <b style="font-size:12px">🎯 このスポットの難易度</b>
-      <span id="quizDifficulty" style="font-size:12px;font-weight:800;color:var(--green);background:white;border-radius:20px;padding:5px 10px">設定予定</span>
+      <span id="quizDifficulty" style="font-size:12px;font-weight:800;color:var(--green);background:white;border-radius:20px;padding:5px 10px">QR読み取り後に表示</span>
     </div>
     <p class="note" style="margin:8px 0 0">初級：10pt ／ 中級：20pt ／ 上級：30pt。正解した場合のみ加算されます。</p>
   </div>
@@ -97,15 +97,15 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
     <b style="font-size:12px">⭐ 正解でもらえるポイント</b>
     <p class="note" style="margin:5px 0 0">🟢 初級：10 pt　／　🟡 中級：20 pt　／　🔴 上級：30 pt</p>
   </div>
-  <p class="note" style="margin-top:12px">※ 試作版です。回答履歴とポイントはこの端末のブラウザ内に保存されます。</p>
+  <p class="note" style="margin-top:12px">回答履歴・ポイント・引換券は、この端末のブラウザに保存されます。別の端末とは共有されません。</p>
   <button class="primary" onclick="show('explore',document.querySelector('nav button'))">地図に戻る</button>
 </div>
 </section>
 <section id="profile" class="panel">
-<h2 class="section-title">👤 参加情報</h2><div class="pagecard"><label for="nickname">ニックネーム</label><input id="nickname" maxlength="16" placeholder="ニックネームを入力"><button class="primary" onclick="saveName()">保存する</button><p class="note" id="nameStatus">試作版ではこの端末内にのみ保存されます。</p></div>
+<h2 class="section-title">👤 参加情報</h2><div class="pagecard"><label for="nickname">ニックネーム</label><input id="nickname" maxlength="16" placeholder="ニックネームを入力"><button class="primary" onclick="saveName()">保存する</button><p class="note" id="nameStatus">ニックネームは参加情報として保存されます。</p></div>
 </section>
 </main>
-<footer>※ 開発中の画面イメージです。実際の建物配置・QR認証・ポイント保存は未実装です。</footer>
+<footer>※ QRコード・クイズ・ポイント機能を利用できます。回答履歴・ポイント・引換券は利用中の端末のブラウザに保存されます。</footer>
 <nav><button class="active" onclick="show('explore',this)">🗺️ 探索</button><button onclick="show('scan',this)">📷 QR</button><button onclick="show('mypage',this)">⭐ ポイント</button><button onclick="show('profile',this)">👤 設定</button></nav>
 </div>
 <script type="module">
@@ -307,7 +307,7 @@ function updateVoucherStatus(total){
     status.appendChild(card);
   });
 }
-function spotInfo(i){const spot=spots[i];if(!spot)return;alert(spot.name+'\\n\\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\\n\\n※ QR認証・クイズ機能はこれから実装します。');}
+function spotInfo(i){const spot=spots[i];if(!spot)return;alert(spot.name+'\\n\\nこのスポットに設置されたQRコードを読み取ると、クイズに挑戦できます。');}
 function getStatusLabel(status){return status==='cleared'?'クリア':status==='attempted'?'挑戦済み':'未挑戦';}
 function renderSpots(){
   const clearedCount=spots.filter(spot=>spot.status==='cleared').length;
@@ -315,7 +315,7 @@ function renderSpots(){
     '<button class="pin '+(spot.status==='cleared'?'done':spot.status==='attempted'?'attempted':'')+'" style="top:'+spot.top+'%;left:'+spot.left+'%" onclick="spotInfo('+i+')" aria-label="'+spot.name+'">'+(i+1)+'</button>'
   ).join('');
   document.getElementById('spotList').innerHTML=spots.map((spot,i)=>
-    '<div class="spot"><div class="emoji">'+spot.emoji+'</div><div class="info"><b>'+spot.name+'</b><small>SPOT '+String(i+1).padStart(2,'0')+' ・ クイズ1問（準備中）</small></div><span class="status">'+getStatusLabel(spot.status)+'</span></div>'
+    '<div class="spot"><div class="emoji">'+spot.emoji+'</div><div class="info"><b>'+spot.name+'</b><small>SPOT '+String(i+1).padStart(2,'0')+' ・ クイズ1問</small></div><span class="status">'+getStatusLabel(spot.status)+'</span></div>'
   ).join('');
   document.getElementById('cleared').textContent=clearedCount+' / '+spots.length;
 }
