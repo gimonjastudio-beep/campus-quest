@@ -57,7 +57,7 @@ footer{text-align:center;color:#98a292;font-size:10px;padding:12px}
 <h2 class="section-title">⭐ マイページ</h2>
 <div class="pagecard"><small class="note">現在の合計ポイント</small><div style="font-size:30px;font-weight:800;color:var(--green)" id="mypoints">0 pt</div><p class="note">ポイントはクイズに正解すると加算されます。</p></div>
 <div class="pagecard"><b>スポット別の獲得履歴</b><p class="note" id="history">まだ獲得履歴はありません。</p></div>
-<div class="pagecard"><b>🎟️ 景品引換券</b><p class="note">引換券の発行条件・景品情報はイベント前に設定します。この試作画面ではまだ発行されません。</p></div>
+<div class="pagecard"><b>🎟️ 景品引換券</b><div class="note" id="voucherStatus">ポイントに応じて引換券が発行されます。</div></div>
 </section>
 <section id="scan" class="panel">
 <h2 class="section-title">📷 QRコード読み取り</h2>
@@ -202,7 +202,7 @@ const spots=[
   {id:'spot06',name:'C1号館',emoji:'🏫',top:44,left:63,status:'notStarted'},
 ];
 const quizBank={
-  spot01:{difficulty:'初級',points:10,question:'酪農学園ホールでできることは何？',choices:['食堂・生協の利用','部活動・サークル等の部室利用','映画やライブのチケット発行','ボーリング'],answer:0},
+  spot01:{difficulty:'中級',points:20,question:'酪農学園ホールでできることは何？',choices:['食堂・生協の利用','部活動・サークル等の部室利用','映画やライブのチケット発行','ボーリング'],answer:0},
   spot02:{difficulty:'初級',points:10,question:'中央館は何階建てでしょう？',choices:['5階建て','7階建て','10階建て','12階建て'],answer:2},
   spot03:{difficulty:'上級',points:30,question:'酪農学園大学の創立者・黒澤酉蔵が大切にした建学の精神の一つは？',choices:['健土健民','文武両道','温故知新','質実剛健'],answer:0},
   spot04:{difficulty:'中級',points:20,question:'2026年に改修されたA3号館。1階は、どのようなスペースとして活用されることを想定しているでしょう？',choices:['学生同士で話し合いや勉強ができるラーニングコモンズ、フリースペース','トレーニングルーム','軽音などのライブスペース','動物の飼育場所'],answer:0},
@@ -260,6 +260,50 @@ function updateLocalScore(){
   document.getElementById('points').textContent=total+' pt';document.getElementById('mypoints').textContent=total+' pt';
   const history=spots.filter(spot=>(localProgress[spot.id]?.points||0)>0).map(spot=>spot.name+'：'+localProgress[spot.id].points+' pt');
   document.getElementById('history').textContent=history.length?history.join(' ／ '):'まだ獲得履歴はありません。';
+  updateVoucherStatus(total);
+}
+function updateVoucherStatus(total){
+  const status=document.getElementById('voucherStatus');
+  if(!status)return;
+  const rewards=[{id:'effort',name:'頑張ったで賞',threshold:70},{id:'special',name:'特別賞',threshold:100}];
+  let vouchers={};
+  try{vouchers=JSON.parse(localStorage.getItem('cq_vouchers')||'{}')||{};}catch(error){vouchers={};}
+  rewards.forEach(reward=>{
+    if(total>=reward.threshold&&!vouchers[reward.id])vouchers[reward.id]={issued:true,used:false,issuedAt:new Date().toISOString()};
+  });
+  localStorage.setItem('cq_vouchers',JSON.stringify(vouchers));
+  status.innerHTML='';
+  rewards.forEach(reward=>{
+    const voucher=vouchers[reward.id];
+    const card=document.createElement('div');
+    card.style.cssText='margin-top:10px;padding:12px;border:1px solid #e3e9dc;border-radius:12px;background:#fbfcf8';
+    const title=document.createElement('b');
+    title.textContent='🎟️ '+reward.name;
+    title.style.display='block';
+    const detail=document.createElement('p');
+    detail.className='note';
+    detail.style.margin='5px 0';
+    if(voucher){
+      detail.textContent=voucher.used?'発行済み・使用済み':'発行済み（'+reward.threshold+'点'+(reward.id==='special'?'・満点':'以上')+'）';
+      card.append(title,detail);
+      if(!voucher.used){
+        const button=document.createElement('button');
+        button.className='secondary';
+        button.textContent='使用済みにする（確認用）';
+        button.addEventListener('click',()=>{
+          const latest=JSON.parse(localStorage.getItem('cq_vouchers')||'{}');
+          if(latest[reward.id])latest[reward.id].used=true;
+          localStorage.setItem('cq_vouchers',JSON.stringify(latest));
+          updateVoucherStatus(total);
+        });
+        card.appendChild(button);
+      }
+    }else{
+      detail.textContent='未発行：あと'+Math.max(0,reward.threshold-total)+' pt';
+      card.append(title,detail);
+    }
+    status.appendChild(card);
+  });
 }
 function spotInfo(i){const spot=spots[i];if(!spot)return;alert(spot.name+'\\n\\n現地のQRコードを読み取ると、このスポットのクイズに進みます。\\n\\n※ QR認証・クイズ機能はこれから実装します。');}
 function getStatusLabel(status){return status==='cleared'?'クリア':status==='attempted'?'挑戦済み':'未挑戦';}
